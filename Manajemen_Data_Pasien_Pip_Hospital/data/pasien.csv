@@ -1,0 +1,11 @@
+id,nama,umur,jenis_kelamin,penyakit,tgl_masuk,tgl_keluar,dokter,ruangan,status_kunjungan
+1, Kendrick Mui, 23, L, DBD, 8 Nov 2025, 18 Nov 2025, dr. Gideon Guillame, Mawar A008, Tidak ada
+2, Sheldon Cooper, 17, L, Fraktur tangan, 8 Nov 2025, -, dr. Gita Gunawan Sp.OT, Anggrek B005, Tidak ada
+3, Setiawan Aji, 22, L, Gastritis, 9 Nov 2025, -, dr. Doni Welace Sp.PD-KGEH, Anggrek B002, Tidak ada
+4, Ayudia Hastari, 12, P, Leukimia, 9 Nov 2025, -, dr. Olivia Vocenta Sp.PD-KHOM, Mawar A006, Ada
+5, Cannice Jiihana, 17, P, GERD, 9 Nov 2025, -, dr. Inayah Arleta Sp.PD, Mawar A002, Ada
+6, Della Hartono, 19, P, Anemia, 9 Nov 2025, -, dr. Arman Suryadi Sp.PD, Mawar B006, Tidak ada
+7, Gibran Syarif, 35, L, Hepatitis A, 9 Nov 2025, 14 Nov 2025, dr. Laila Nurhadi Sp.PD, Anggrek A003, Ada
+8, Richard Rendi, 67, L, Skoliosis, 9 Nov 2025, 15 Nov 2025, dr. Erna Widoyo Sp.OT, Anggrek A001, Tidak ada 
+9, Nadine Viviene, 26, P, Radang Tenggorokan, 10 Nov 2025, 13 Nov 2025, dr. Dilan Gutawa Sp.THT-KL, Lily C006, Ada 
+10, Carolina Nubis, 34, P, Pneumonia, 10 Nov 2025, 15 Nov 2025, dr. Saputra Edi Sp.P, Lily A004, Tidak ada
