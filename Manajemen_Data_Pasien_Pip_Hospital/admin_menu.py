@@ -1,11 +1,12 @@
 import os
 import pandas as pd
+from colorama import Fore, Style, init
 from datetime import datetime
 from tabulate import tabulate
 from InquirerPy import inquirer
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
-import re
+init(autoreset=True)
 
 dataDIR = 'data'     
 dfPasien = (f'{dataDIR}/pasien.csv')
@@ -39,9 +40,9 @@ def tambah_log(aksi, role="admin"):
 
 def setujui_permohonan():
     df = pd.read_csv(dfPermohonan, dtype=str)
-    print("\n=========================================================================================================")
-    print("\n                                      Permohonan Kunjungan Pengunjung                                    ")
-    print("\n=========================================================================================================")
+    print("="*70)
+    print("Permohonan Kunjungan Pengunjung".center(70))
+    print("="*70)   
 
     df_display = df.rename(columns={
         "id": "ID",
@@ -51,30 +52,18 @@ def setujui_permohonan():
         "status": "Status"
     })
 
-    # Format jam besuk → HH.MM (dua digit jam & dua digit menit)
-    def format_jam_besuk(jam):
-        try:
-            jam_float = str(jam)
-            jam_str = f"{jam_float:.2f}"
-            jam_part, menit_part = jam_str.split(".")
-            return f"{jam_part.zfill(2)}.{menit_part}"
-        except (ValueError, TypeError):
-            return str(jam)
-
-    df_display["Jam Besuk"] = df_display["Jam Besuk"].apply(format_jam_besuk)
-
-    print(tabulate(df_display.values.tolist(), headers=df_display.columns.tolist(), tablefmt="rounded_outline"))
+    print(tabulate(df_display.values.tolist(), headers=df_display.columns.tolist(), tablefmt="rounded_outline", disable_numparse=True))
 
     idx_input = input("\nPilih nomor permohonan untuk ditindak: ").strip()
     if not idx_input.isdigit():
-        print("Masukkan nomor yang valid.")
-        input("Tekan Enter...")
+        print(Fore.RED + "Masukkan nomor yang valid." + Style.RESET_ALL)
+        input(Fore.YELLOW + "Tekan enter untuk melanjutkan..." + Style.RESET_ALL)
         return setujui_permohonan()
 
     idx = int(idx_input) - 1
     if idx < 0 or idx >= len(df):
-        print("Nomor tidak valid.")
-        input("Tekan Enter...")
+        print(Fore.RED + "Nomor tidak valid." + Style.RESET_ALL)
+        input(Fore.YELLOW + "Tekan enter untuk melanjutkan..." + Style.RESET_ALL)
         return
 
     current_status = df.loc[idx, "status"]
@@ -94,17 +83,17 @@ def setujui_permohonan():
     if action == "Setujui":
         df.loc[idx, "status"] = "Disetujui"
         tambah_log(f"Menyetujui kunjungan: {nama_penjenguk} untuk {nama_pasien}")
-        print(f"\nPermohonan {nama_penjenguk} telah disetujui!")
+        print(Fore.GREEN + f"\nPermohonan {nama_penjenguk} telah disetujui!" + Style.RESET_ALL)
     elif action == "Tolak":
         df.loc[idx, "status"] = "Ditolak"
         tambah_log(f"Menolak kunjungan: {nama_penjenguk} untuk {nama_pasien}")
-        print(f"\nPermohonan {nama_penjenguk} telah ditolak!")
+        print(Fore.RED + f"\nPermohonan {nama_penjenguk} telah ditolak!" + Style.RESET_ALL)
     else:
-        print("\nOperasi dibatalkan.")
+        print(Fore.RED + "\nOperasi dibatalkan." + Style.RESET_ALL)
 
     df.to_csv(dfPermohonan, index=False)
-    print("\nPerubahan telah disimpan.")
-    input("\nTekan enter untuk melanjutkan...")
+    print(Fore.GREEN + "\nPerubahan telah disimpan." + Style.RESET_ALL)
+    input(Fore.YELLOW + "\nTekan enter untuk melanjutkan..." + Style.RESET_ALL)
     clear()
 
 def lihat_pasien():
@@ -112,9 +101,9 @@ def lihat_pasien():
     if df.empty:
         print("\nBelum ada data pasien.")
     else:
-        print("\n=========================================================================================================")
-        print("\n                                            Daftar Pasien                                                ")
-        print("\n=========================================================================================================")
+        print("="*150)
+        print("Daftar Pasien".center(150))
+        print("="*150)
         df_display = df.copy()
 
         def truncate(text, max_len=20):
@@ -126,6 +115,7 @@ def lihat_pasien():
 
         df_display = df_display.rename(columns={
             "id": "ID",
+            "bpjs": "BPJS",
             "nama": "Nama",
             "umur": "Umur",
             "jenis_kelamin": "JK",
@@ -137,18 +127,18 @@ def lihat_pasien():
             "status_kunjungan": "Status"
         })
 
-        headers = df_display.columns.tolist()
+        headers = [f"{Fore.BLUE}{col}{Style.RESET_ALL}" for col in df_display.columns]
         rows = df_display.values.tolist()
         print(tabulate(rows, headers=headers, tablefmt="rounded_outline", maxcolwidths=20))
 
-    input("\nTekan enter untuk melanjutkan")
+    input(Fore.YELLOW + "Tekan enter untuk melanjutkan..." + Style.RESET_ALL)
 
 def tambah_pasien():
     df = baca_pasien()
     try:
-        print("\n=========================================================================================================")
-        print("                                            Tambah Pasien Baru                                           ")
-        print("=========================================================================================================")
+        print("="*50)
+        print("Tambah Pasien Baru".center(50))
+        print("="*50)
 
         # Input nama (wajib)
         while True:
@@ -156,7 +146,22 @@ def tambah_pasien():
             if nama:
                 break
             else:
-                print("Data tidak boleh kosong.")
+                print(Fore.RED + "Data tidak boleh kosong." + Style.RESET_ALL)
+        
+        # Input BPJS (wajib, harus angka, dan unik jika diisi)
+        while True:
+            bpjs = input("Nomor BPJS: ").strip()
+            if not bpjs:
+                print(Fore.RED + "Nomor BPJS tidak boleh kosong." + Style.RESET_ALL)
+                continue
+            if not bpjs.isdigit():
+                print(Fore.RED + "Nomor BPJS harus berupa angka." + Style.RESET_ALL)
+                continue
+            # Cek keunikan
+            if not df.empty and bpjs in df['bpjs'].values:
+                print(Fore.RED + f"Nomor BPJS '{bpjs}' sudah terdaftar! Gunakan nomor lain." + Style.RESET_ALL)
+                continue
+            break
 
         # Input umur (harus angka)
         while True:
@@ -164,7 +169,7 @@ def tambah_pasien():
             if umur.isdigit():
                 break
             else:
-                print("Umur harus berisi angka. Silakan coba lagi.")
+                print(Fore.RED + "Umur harus berisi angka. Silakan coba lagi." + Style.RESET_ALL)
 
         # Input jenis kelamin (pilih L/P)
         jk = inquirer.select(
@@ -180,29 +185,29 @@ def tambah_pasien():
             if penyakit:
                 break
             else:
-                print("Data tidak boleh kosong.")
+                print(Fore.RED + "Data tidak boleh kosong." + Style.RESET_ALL)
 
         # Input tanggal masuk (wajib, harus format DD MMM YYYY)
         while True:
             tgl_masuk = input("Tanggal masuk (contoh: 10 Nov 2025): ").strip()
             if not tgl_masuk:
-                print("Tanggal masuk tidak boleh kosong.")
+                print(Fore.RED + "Tanggal masuk tidak boleh kosong." + Style.RESET_ALL)
                 continue
             if validasi_tanggal_csv(tgl_masuk) and tgl_masuk != "-":
                 break
             else:
-                print("Format tanggal masuk salah! Contoh yang benar: 10 Nov 2025")
+                print(Fore.RED + "Format tanggal masuk salah! Contoh yang benar: 10 Nov 2025" + Style.RESET_ALL)
 
         # Input tanggal keluar (boleh tanggal atau "-", tidak boleh kosong/format salah)
         while True:
             tgl_keluar = input("Tanggal keluar (contoh: 15 Nov 2025 atau -): ").strip()
             if not tgl_keluar:
-                print("Tanggal keluar tidak boleh kosong.")
+                print(Fore.RED + "Tanggal keluar tidak boleh kosong." + Style.RESET_ALL)
                 continue
             if validasi_tanggal_csv(tgl_keluar):
                 break
             else:
-                print("Format tanggal keluar salah! Contoh: 15 Nov 2025 atau '-'")
+                print(Fore.RED + "Format tanggal keluar salah! Contoh: 15 Nov 2025 atau '-'" + Style.RESET_ALL)
 
         # Input dokter (wajib)
         while True:
@@ -210,7 +215,7 @@ def tambah_pasien():
             if dokter:
                 break
             else:
-                print("Data tidak boleh kosong.")
+                print(Fore.RED + "Data tidak boleh kosong." + Style.RESET_ALL)
 
         # Input ruangan (wajib)
         while True:
@@ -218,7 +223,7 @@ def tambah_pasien():
             if ruangan:
                 break
             else:
-                print("Data tidak boleh kosong.")
+                print(Fore.RED + "Data tidak boleh kosong." + Style.RESET_ALL)
 
         # Input status kunjungan
         status = inquirer.select(
@@ -231,11 +236,12 @@ def tambah_pasien():
         # Generate ID baru
         new_id = df["id"].astype(int).max() + 1 if not df.empty else 1
 
-        # Buat data baru
+        # Buat data baru — termasuk bpjs
         new_row = {
             "id": new_id,
+            "bpjs": bpjs,  # ✅ Simpan BPJS
             "nama": nama,
-            "umur": int(umur),  # Simpan sebagai integer
+            "umur": int(umur),
             "jenis_kelamin": jk,
             "penyakit": penyakit,
             "tgl_masuk": tgl_masuk,
@@ -248,12 +254,12 @@ def tambah_pasien():
         df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
         simpan_pasien(df)
         tambah_log(f"Menambah pasien: {nama}")
-        print(f"\n✅ Pasien {nama} berhasil ditambahkan!")
+        print(Fore.GREEN + f"\nPasien {nama} berhasil ditambahkan!" + Style.RESET_ALL)
 
     except Exception as e:
-        print(f"\nTerjadi kesalahan: {e}")
+        print(Fore.RED + f"\nTerjadi kesalahan: {e}" + Style.RESET_ALL)
 
-    input("\nTekan enter untuk melanjutkan")
+    input(Fore.YELLOW + "Tekan enter untuk melanjutkan..." + Style.RESET_ALL)
     clear()
 
 def validasi_tanggal_csv(tgl_str):
@@ -272,26 +278,39 @@ def edit_pasien():
     
     id_edit = input("\nID pasien: ").strip()
     if not id_edit.isdigit():
-        print("\nID harus berupa angka.")
-        input("\nTekan enter untuk melanjutkan")
+        print(Fore.RED + "\nID harus berupa angka." + Style.RESET_ALL)
+        input(Fore.YELLOW + "Tekan enter untuk melanjutkan..." + Style.RESET_ALL)
         return edit_pasien()
 
     id_edit = int(id_edit)
     if id_edit not in df["id"].values:
-        print(f"\nID {id_edit} tidak ditemukan. Daftar ID yang tersedia: {sorted(df['id'].dropna().astype(int).tolist())}")
-        input("\nTekan enter untuk melanjutkan")
+        print(Fore.RED + f"\nID {id_edit} tidak ditemukan. Daftar ID yang tersedia: {sorted(df['id'].dropna().astype(int).tolist())}" + Style.RESET_ALL)
+        input(Fore.YELLOW + "Tekan enter untuk melanjutkan..." + Style.RESET_ALL)
         return
 
     idx = df[df["id"] == id_edit].index[0]
     data_lama = df.loc[idx].to_dict()
 
-    print("\n=========================================================================================================")
-    print("                                        Edit Data Pasien                                                 ")
-    print("=========================================================================================================")
+    print("="*60)
+    print("Edit Data Pasien.".center(60))
+    print("="*60)
     print(f"\nMengedit data pasien ID {id_edit} ({data_lama['nama']})")
     print("-" * 50)
 
     nama_baru = input(f"Nama [{data_lama['nama']}]: ").strip() or data_lama['nama']
+
+    while True:
+        bpjs_baru = input(f"BPJS [{data_lama.get('bpjs', '')}]: ").strip() or data_lama.get('bpjs', '')
+        if not bpjs_baru:
+            print("Nomor BPJS tidak boleh kosong.")
+            continue
+        if not bpjs_baru.isdigit():
+            print("Nomor BPJS harus berupa angka.")
+            continue
+        if bpjs_baru != data_lama.get('bpjs', '') and not df.empty and bpjs_baru in df['bpjs'].values:
+            print(f"Nomor BPJS '{bpjs_baru}' sudah digunakan oleh pasien lain!")
+            continue
+        break
 
     while True:
         umur_input = input(f"Umur [{data_lama['umur']}]: ").strip() or str(data_lama['umur'])
@@ -312,7 +331,7 @@ def edit_pasien():
     penyakit_baru = input(f"Penyakit [{data_lama['penyakit']}]: ").strip() or data_lama['penyakit']
     if not penyakit_baru:
         print("Penyakit tidak boleh kosong.")
-        input("\nTekan enter untuk melanjutkan")
+        input(Fore.YELLOW + "Tekan enter untuk melanjutkan..." + Style.RESET_ALL)
         return
 
     # Validasi Tanggal Masuk
@@ -326,7 +345,6 @@ def edit_pasien():
         else:
             print("Format tanggal masuk salah! Harus seperti: 10 Nov 2025")
 
-    # Validasi Tanggal Keluar
     while True:
         tgl_keluar_baru = input(f"Tanggal keluar (contoh: 15 Nov 2025 atau -) [{data_lama['tgl_keluar']}]: ").strip() or data_lama['tgl_keluar']
         if not tgl_keluar_baru:
@@ -340,13 +358,13 @@ def edit_pasien():
     dokter_baru = input(f"Dokter [{data_lama['dokter']}]: ").strip() or data_lama['dokter']
     if not dokter_baru:
         print("Dokter tidak boleh kosong.")
-        input("\nTekan enter untuk melanjutkan")
+        input(Fore.YELLOW + "Tekan enter untuk melanjutkan..." + Style.RESET_ALL)
         return
 
     ruangan_baru = input(f"Ruangan [{data_lama['ruangan']}]: ").strip() or data_lama['ruangan']
     if not ruangan_baru:
         print("Ruangan tidak boleh kosong.")
-        input("\nTekan enter untuk melanjutkan")
+        input(Fore.YELLOW + "Tekan enter untuk melanjutkan..." + Style.RESET_ALL)
         return
 
     status_baru = inquirer.select(
@@ -359,6 +377,7 @@ def edit_pasien():
 
     # Simpan perubahan
     df.loc[idx, "nama"] = nama_baru
+    df.loc[idx, "bpjs"] = bpjs_baru
     df.loc[idx, "umur"] = umur_baru
     df.loc[idx, "jenis_kelamin"] = jk_baru
     df.loc[idx, "penyakit"] = penyakit_baru
@@ -370,22 +389,22 @@ def edit_pasien():
 
     simpan_pasien(df)
     tambah_log(f"Edit pasien ID {id_edit}: {nama_baru}")
-    print("\n✅ Data pasien berhasil diperbarui!")
-    input("\nTekan enter untuk melanjutkan")
+    print(Fore.GREEN + "\nData pasien berhasil diperbarui!" + Style.RESET_ALL)
+    input(Fore.YELLOW + "Tekan enter untuk melanjutkan..." + Style.RESET_ALL)
     clear()
 
 def hapus_pasien():
     df = baca_pasien()
     if df.empty:
-        print("\nTidak ada pasien.")
-        input("\nTekan enter untuk melanjutkan")
+        print(Fore.RED + "\nTidak ada pasien." + Style.RESET_ALL)
+        input(Fore.YELLOW + "Tekan enter untuk melanjutkan..." + Style.RESET_ALL)
         return
 
     lihat_pasien()
     id_hapus = input("\nID pasien: ").strip()
     if not id_hapus.isdigit() or int(id_hapus) not in df["id"].values:
-        print("\nID tidak valid.")
-        input("\nTekan enter untuk melanjutkan")
+        print(Fore.RED + "\nID tidak valid." + Style.RESET_ALL)
+        input(Fore.YELLOW + "Tekan enter untuk melanjutkan..." + Style.RESET_ALL)
         return
 
     id_hapus = int(id_hapus)
@@ -400,20 +419,20 @@ def hapus_pasien():
 
         simpan_pasien(df)
         tambah_log(f"Hapus pasien: {nama}")
-        print("\n✅ Berhasil dihapus dan ID diperbarui.")
+        print(Fore.GREEN + "\nBerhasil dihapus dan ID diperbarui." + Style.RESET_ALL)
     else:
-        print("\nDibatalkan.")
+        print(Fore.RED + "\nDibatalkan." + Style.RESET_ALL)
 
-    input("\nTekan enter untuk melanjutkan")
+    input(Fore.YELLOW + "Tekan enter untuk melanjutkan..." + Style.RESET_ALL)
     clear()
 
 def lihat_log():
     df = pd.read_csv(dfLog)
-    print("\n=========================================================================================================")
-    print("\n                                       Log Aktivitas Admin                                               ")
-    print("\n=========================================================================================================")
+    print("="*90)
+    print("Log Aktivitas Admin".center(90))
+    print("="*90)
     print(tabulate(df.values.tolist(), headers=df.columns.tolist(), tablefmt="rounded_outline"))
-    input("\nTekan enter untuk melanjutkan")
+    input(Fore.YELLOW + "Tekan enter untuk melanjutkan..." + Style.RESET_ALL)
     clear()
 
 def tampilkan_grafik_pasien():
@@ -449,11 +468,11 @@ def tampilkan_grafik_pasien():
     clear()
 
 def lihat_permohonan_kunjungan():
-    df = pd.read_csv(dfPermohonan, converters={'jam_besuk': str})
+    df = pd.read_csv(dfPermohonan, dtype=str)
 
-    print("\n=========================================================================================================")
-    print("\n                                      Daftar Permohonan Kunjungan                                        ")
-    print("\n=========================================================================================================")
+    print("="*70)
+    print("Daftar Permohonan Kunjungan".center(70))
+    print("="*70)
 
     df_display = df.rename(columns={
         "id": "ID",
@@ -463,19 +482,10 @@ def lihat_permohonan_kunjungan():
         "status": "Status"
     })
 
-    # Format jam besuk → HH.MM (dua digit jam & dua digit menit)
-    def format_jam_besuk(jam):
-        try:
-            jam_float = str(jam)
-            jam_str = f"{jam_float:.2f}"
-            jam_part, menit_part = jam_str.split(".")
-            return f"{jam_part.zfill(2)}.{menit_part}"
-        except (ValueError, TypeError):
-            return str(jam)
+    headers = [f"{Fore.BLUE}{col}{Style.RESET_ALL}" for col in df_display.columns]
+    rows = df_display.values.tolist()
 
-    df_display["Jam Besuk"] = df_display["Jam Besuk"].apply(format_jam_besuk)
-
-    print(tabulate(df_display.values.tolist(), headers=df_display.columns.tolist(), tablefmt="rounded_outline"))
+    print(tabulate(rows, headers=headers, tablefmt="rounded_outline", disable_numparse=True))
 
     if inquirer.confirm("Ingin mengelola salah satu permohonan?", default=False).execute():
         clear()
@@ -523,4 +533,4 @@ def menu_admin(username):
             break
         else:
             print("Pilihan tidak valid.")
-            input("\nTekan enter untuk melanjutkan")
+            input(Fore.YELLOW + "Tekan enter untuk melanjutkan..." + Style.RESET_ALL)
