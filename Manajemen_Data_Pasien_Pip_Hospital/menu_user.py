@@ -72,21 +72,34 @@ def ajukan_permohonan():
     print("FORM PERMOHONAN KUNJUNGAN PIP HOSPITAL".center(60))
     print("=" * 60)
 
+    pattern_nama = r"^[a-zA-Z ]+$"
+
     while True:
         nama = inquirer.text(message="Nama Penjenguk:").execute().strip()
-        if nama:
+
+        if not nama:
+            print(f"{Fore.RED}Nama penjenguk tidak boleh kosong!{Style.RESET_ALL}")
+        elif not re.match(pattern_nama, nama):
+            print(f"{Fore.RED}Nama harus berupa huruf dan tidak boleh mengandung simbol/angka!{Style.RESET_ALL}")
+        else:
             break
-        print(f"{Fore.RED}Nama penjenguk tidak boleh kosong!{Style.RESET_ALL}")
 
     while True:
         pasien = inquirer.text(message="Nama Pasien:").execute().strip()
-        if pasien:
+        
+        if not pasien:
+            print(f"{Fore.RED}Nama pasien tidak boleh kosong!{Style.RESET_ALL}")
+        elif not re.match(pattern_nama, pasien):
+            print(f"{Fore.RED}Nama harus berupa huruf dan tidak boleh mengandung simbol/angka!{Style.RESET_ALL}")
+        else:
             break
-        print(f"{Fore.RED}Nama pasien tidak boleh kosong!{Style.RESET_ALL}")
 
+    # Regex format HH.MM
     pattern_jam = r"^(?:[01]\d|2[0-3])\.[0-5]\d$"
+
     while True:
         jam = inquirer.text(message="Rencana Jam Besuk (cth: 09.00):").execute().strip()
+
         if re.match(pattern_jam, jam):
             break
         print(f"{Fore.RED}Format jam harus HH.MM (contoh 09.00)!{Style.RESET_ALL}")
